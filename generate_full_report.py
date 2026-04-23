@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Comprehensive PDF Report Generator
 Generates a full security report with findings, URLs, risk scores, and mitigation strategies
@@ -21,7 +21,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class ComprehensiveReportGenerator:
     """Generate comprehensive PDF security reports"""
 
@@ -40,14 +39,14 @@ class ComprehensiveReportGenerator:
     def check_and_create_sample_data(self):
         """Ensure the database tables exist — never insert fake sample data."""
         from enhanced_database import FindingsDB
-        FindingsDB(self.db_path)  # creates tables if they don't exist
+        FindingsDB(self.db_path)                                      
 
     def create_sample_database(self):
         """Create sample database with test findings for demonstration"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        # Create findings table
+                               
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS findings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +60,7 @@ class ComprehensiveReportGenerator:
             )
         """)
 
-        # Create extracted_data table
+                                     
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS extracted_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,7 +71,7 @@ class ComprehensiveReportGenerator:
             )
         """)
 
-        # Sample findings data
+                              
         sample_findings = [
             ("http://example-dark.onion/profile", "admin_credentials", "Found admin panel with credentials exposed", 95, 92, "credential_leak"),
             ("http://marketplace-dark.onion/shop", "credit_card_data", "Credit card data in public database", 98, 95, "financial_data"),
@@ -86,14 +85,14 @@ class ComprehensiveReportGenerator:
             ("http://vendor-dark.onion/supply", "supply_chain", "Supply chain partner credentials", 75, 70, "credential_leak"),
         ]
 
-        # Insert sample findings
+                                
         for url, keyword, snippet, confidence, risk_score, classification in sample_findings:
             cursor.execute("""
                 INSERT INTO findings (url, keyword, snippet, confidence, risk_score, classification)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (url, keyword, snippet, confidence, risk_score, classification))
 
-        # Insert extracted data samples
+                                       
         finding_id = 1
         extracted_data_samples = [
             (finding_id, "email", "admin@company.com"),
@@ -126,7 +125,7 @@ class ComprehensiveReportGenerator:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            # Get findings filtered by current target company
+                                                             
             cursor.execute("""
                 SELECT DISTINCT f.id, f.url, f.keyword, f.confidence, f.risk_score,
                        f.snippet, f.classification, f.found_at
@@ -137,7 +136,7 @@ class ComprehensiveReportGenerator:
 
             findings = cursor.fetchall()
 
-            # Get statistics filtered by current target company
+                                                               
             cursor.execute("""
                 SELECT
                     COUNT(DISTINCT f.id) as total_findings,
@@ -225,7 +224,7 @@ class ComprehensiveReportGenerator:
             ]
         }
 
-        # Base urgency-based advice
+                                   
         if risk_score >= 85:
             base_advice = [
                 "🔴 CRITICAL: Immediate action required - activate incident response team NOW",
@@ -259,7 +258,7 @@ class ComprehensiveReportGenerator:
                 "Document for future reference"
             ]
 
-        # Add classification-specific advice
+                                            
         if classification in advice_map:
             base_advice.extend(advice_map[classification])
 
@@ -284,7 +283,7 @@ class ComprehensiveReportGenerator:
         styles = getSampleStyleSheet()
         story = []
 
-        # Custom styles
+                       
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
@@ -315,7 +314,7 @@ class ComprehensiveReportGenerator:
             leading=14
         )
 
-        # ============ TITLE PAGE ============
+                                              
         story.append(Paragraph("DARK WEB OSINT SECURITY ASSESSMENT", title_style))
         story.append(Paragraph("COMPREHENSIVE FINDINGS REPORT", styles['Heading2']))
         story.append(Spacer(1, 0.3*inch))
@@ -330,7 +329,7 @@ class ComprehensiveReportGenerator:
         story.append(Paragraph(f"<b>Classification:</b> CONFIDENTIAL", styles['Normal']))
         story.append(Spacer(1, 0.5*inch))
 
-        # ============ EXECUTIVE SUMMARY ============
+                                                     
         story.append(Paragraph("EXECUTIVE SUMMARY", subtitle_style))
 
         findings, stats = self.get_findings_data(days_back)
@@ -363,12 +362,12 @@ All findings in this report include specific mitigation recommendations.
         
         story.append(Spacer(1, 0.3*inch))
 
-        # ============ DETAILED FINDINGS TABLE ============
+                                                           
         if findings:
             story.append(PageBreak())
             story.append(Paragraph("DETAILED FINDINGS OVERVIEW", subtitle_style))
 
-            # Create comprehensive table
+                                        
             table_data = [['Risk', 'Score', 'Classification', 'Source URL', 'Keyword', 'Discovered']]
 
             for finding in findings:
@@ -405,13 +404,13 @@ All findings in this report include specific mitigation recommendations.
             story.append(table)
             story.append(Spacer(1, 0.3*inch))
 
-            # ============ CRITICAL FINDINGS DETAILED ANALYSIS ============
+                                                                           
             story.append(PageBreak())
             story.append(Paragraph("CRITICAL & HIGH-RISK FINDINGS - DETAILED ANALYSIS", subtitle_style))
 
             critical_findings = [f for f in findings if f[4] >= 70]
 
-            for i, finding in enumerate(critical_findings[:15]):  # Top 15 findings
+            for i, finding in enumerate(critical_findings[:15]):                   
                 risk_level, risk_color = self.get_risk_level(finding[4])
 
                 finding_title = f"Finding #{i+1}: {risk_level} RISK"
@@ -431,7 +430,7 @@ All findings in this report include specific mitigation recommendations.
                 story.append(Paragraph(details, normal_style))
                 story.append(Spacer(1, 0.15*inch))
 
-                # Add extracted data if available
+                                                 
                 extracted = self.get_extracted_data(finding[0])
                 if extracted:
                     story.append(Paragraph("<b>Extracted Data Elements:</b>", styles['Heading4']))
@@ -439,7 +438,7 @@ All findings in this report include specific mitigation recommendations.
                         story.append(Paragraph(f"• <b>{data_type}:</b> {data_value}", styles['Normal']))
                     story.append(Spacer(1, 0.1*inch))
 
-                # Mitigation advice
+                                   
                 story.append(Paragraph("<b>RECOMMENDED IMMEDIATE ACTIONS:</b>", styles['Heading4']))
                 mitigation = self.get_mitigation_advice(finding)
                 for action in mitigation:
@@ -447,11 +446,11 @@ All findings in this report include specific mitigation recommendations.
 
                 story.append(Spacer(1, 0.2*inch))
 
-                # Page break after every 3 critical findings to keep formatting clean
+                                                                                     
                 if (i + 1) % 3 == 0 and i < len(critical_findings) - 1:
                     story.append(PageBreak())
 
-            # ============ MITIGATION STRATEGY SECTION ============
+                                                                   
             story.append(PageBreak())
             story.append(Paragraph("COMPREHENSIVE MITIGATION STRATEGY", subtitle_style))
 
@@ -496,7 +495,7 @@ All findings in this report include specific mitigation recommendations.
                     story.append(Paragraph(f"✓ {action}", styles['Normal']))
                 story.append(Spacer(1, 0.15*inch))
 
-            # ============ RECOMMENDATIONS ============
+                                                       
             story.append(PageBreak())
             story.append(Paragraph("RECOMMENDATIONS & BEST PRACTICES", subtitle_style))
 
@@ -546,7 +545,7 @@ Establish relationships with legal counsel specializing in cybersecurity.<br/>
 
             story.append(Paragraph(recommendations, styles['Normal']))
 
-            # ============ REPORT FOOTER ============
+                                                     
             story.append(PageBreak())
             story.append(Paragraph("REPORT INFORMATION & DISCLAIMERS", subtitle_style))
 
@@ -584,7 +583,7 @@ For emergencies, activate your incident response procedures immediately.<br/>
 
             story.append(Paragraph(footer_text, styles['Normal']))
 
-        # Build PDF
+                   
         doc.build(story)
         logger.info(f"[✓] PDF report successfully generated: {output_path}")
         print(f"\n{'='*60}")
@@ -598,21 +597,20 @@ For emergencies, activate your incident response procedures immediately.<br/>
 
         return output_path
 
-
 if __name__ == "__main__":
     import sys
 
-    # Default parameters
+                        
     output_file = "osint_full_report.pdf"
     days = 30
 
-    # Parse command line arguments
+                                  
     if len(sys.argv) > 1:
         output_file = sys.argv[1]
     if len(sys.argv) > 2:
         days = int(sys.argv[2])
 
-    # Generate report
+                     
     try:
         generator = ComprehensiveReportGenerator()
         generator.generate_pdf_report(output_path=output_file, days_back=days)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 System Health Monitor for Dark Web OSINT
 Tracks crawl performance, database health, and system status
@@ -13,7 +13,6 @@ from pathlib import Path
 from logging_config import get_logger
 
 logger = get_logger(__name__)
-
 
 class HealthMonitor:
     """Monitors system health and collects metrics"""
@@ -64,7 +63,7 @@ class HealthMonitor:
             conn = sqlite3.connect(self.db_path)
             c = conn.cursor()
             
-            # Get table counts
+                              
             c.execute("SELECT COUNT(*) FROM findings")
             findings_count = c.fetchone()[0]
             
@@ -77,7 +76,7 @@ class HealthMonitor:
             c.execute("SELECT COUNT(*) FROM extracted_data")
             extracted_count = c.fetchone()[0]
             
-            # Get recent activity
+                                 
             c.execute("""
                 SELECT COUNT(*), status FROM crawl_history 
                 WHERE created_at > datetime('now', '-24 hours')
@@ -85,14 +84,14 @@ class HealthMonitor:
             """)
             recent = dict(c.fetchall())
             
-            # Get last crawl
+                            
             c.execute("""
                 SELECT created_at, status FROM crawl_history 
                 ORDER BY created_at DESC LIMIT 1
             """)
             last_crawl = c.fetchone()
             
-            # Get top keywords today
+                                    
             c.execute("""
                 SELECT keyword, COUNT(*) as count 
                 FROM findings 
@@ -102,7 +101,7 @@ class HealthMonitor:
             """)
             top_keywords = [{'keyword': row[0], 'count': row[1]} for row in c.fetchall()]
             
-            # Get database file size
+                                    
             db_size_bytes = os.path.getsize(self.db_path)
             db_size_mb = db_size_bytes / (1024 * 1024)
             
@@ -137,7 +136,7 @@ class HealthMonitor:
             conn = sqlite3.connect(self.db_path)
             c = conn.cursor()
             
-            # Success rate (last 100 crawls)
+                                            
             c.execute("""
                 SELECT 
                     status,
@@ -160,7 +159,7 @@ class HealthMonitor:
             success_count = stats_by_status.get('success', {}).get('count', 0)
             success_rate = (success_count / total_crawls * 100) if total_crawls > 0 else 0
             
-            # Crawl rate and performance
+                                        
             c.execute("""
                 SELECT 
                     ROUND(AVG(duration_ms), 0) as avg_duration_ms,
@@ -220,7 +219,7 @@ class HealthMonitor:
             crawl_stats = self._get_crawling_stats()
             system_resources = self._get_system_resources()
             
-            # Determine status
+                              
             if db_health.get('status') == 'error':
                 return 'critical'
             
@@ -314,6 +313,5 @@ Status: {'✓ Connected' if tor_status.get('tor_reachable') else '✗ Disconnect
 """
         return report
 
-
-# Export singleton instance
+                           
 health_monitor = HealthMonitor()

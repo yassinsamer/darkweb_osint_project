@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Database Backup Manager for Dark Web OSINT
 Handles automated backups with compression and rotation
@@ -14,7 +14,6 @@ from pathlib import Path
 from logging_config import get_logger
 
 logger = get_logger(__name__)
-
 
 class BackupManager:
     """Manages database backups and retention"""
@@ -34,7 +33,7 @@ class BackupManager:
         
         self.config_path = config_path
         self.config = self._load_config()
-        self.retention_days = 30  # Default retention
+        self.retention_days = 30                     
         self.compression_enabled = True
     
     def _load_config(self):
@@ -65,24 +64,24 @@ class BackupManager:
                     'error': 'Database file not found'
                 }
             
-            # Generate backup filename
+                                      
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             tag_str = f"_{tag}" if tag else ""
             backup_name = f"findings_backup_{timestamp}{tag_str}"
             
-            # Create temporary backup (uncompressed)
+                                                    
             backup_path = self.backup_dir / f"{backup_name}.db"
             
             logger.info(f"Creating backup: {backup_path}")
             
-            # Copy database file (handles lock by creating copy)
+                                                                
             shutil.copy2(self.db_path, str(backup_path))
             
-            # Compress if requested
+                                   
             if compress:
                 compressed_path = self.backup_dir / f"{backup_name}.db.gz"
                 self._compress_backup(str(backup_path), str(compressed_path))
-                os.remove(backup_path)  # Remove uncompressed
+                os.remove(backup_path)                       
                 backup_path = compressed_path
             
             backup_size_mb = os.path.getsize(backup_path) / (1024*1024)
@@ -140,11 +139,11 @@ class BackupManager:
                     'error': 'Backup file not found'
                 }
             
-            # Check if compressed
+                                 
             is_compressed = str(backup_file).endswith('.gz')
             
             if is_compressed:
-                # Decompress to temporary location
+                                                  
                 import tempfile
                 with tempfile.NamedTemporaryFile(delete=False) as tmp:
                     tmp_path = tmp.name
@@ -157,7 +156,7 @@ class BackupManager:
             else:
                 source_path = str(backup_path)
             
-            # Verify backup is valid
+                                    
             try:
                 conn = sqlite3.connect(source_path)
                 conn.execute("SELECT 1 FROM findings LIMIT 1")
@@ -169,13 +168,13 @@ class BackupManager:
                     'error': 'Backup file is corrupted'
                 }
             
-            # Create safety backup of current database
+                                                      
             safety_backup = self.create_backup(tag="pre_restore")
             
-            # Restore
+                     
             shutil.copy2(source_path, self.db_path)
             
-            # Clean up temporary file if decompressed
+                                                     
             if is_compressed:
                 os.remove(tmp_path)
             
@@ -292,6 +291,5 @@ class BackupManager:
             logger.error(f"Failed to get backup stats: {e}")
             return {}
 
-
-# Export singleton instance
+                           
 backup_manager = BackupManager()

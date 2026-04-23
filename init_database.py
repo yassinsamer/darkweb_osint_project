@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """Initialize findings database with proper schema"""
 import sqlite3
 import os
@@ -6,7 +6,7 @@ import os
 def setup_database(db_path="findings.db"):
     """Create or update database schema"""
     
-    # Backup and remove old database
+                                    
     if os.path.exists(db_path):
         backup_path = db_path + ".backup"
         if os.path.exists(backup_path):
@@ -17,13 +17,13 @@ def setup_database(db_path="findings.db"):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Drop old tables if they exist
+                                   
     cursor.execute("DROP TABLE IF EXISTS extracted_data;")
     cursor.execute("DROP TABLE IF EXISTS findings_old;")
     cursor.execute("DROP TABLE IF EXISTS findings;")
     conn.commit()
     
-    # Create fresh tables
+                         
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS findings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +47,7 @@ def setup_database(db_path="findings.db"):
         )
     """)
     
-    # Insert sample data
+                        
     sample_findings = [
         ("http://example-dark.onion/profile", "admin_credentials", "Found admin panel with credentials exposed", 95, 92, "credential_leak"),
         ("http://marketplace-dark.onion/shop", "credit_card_data", "Credit card data in public database", 98, 95, "financial_data"),
@@ -67,7 +67,7 @@ def setup_database(db_path="findings.db"):
             VALUES (?, ?, ?, ?, ?, ?)
         """, (url, keyword, snippet, confidence, risk_score, classification))
     
-    # Insert extracted data
+                           
     extracted_data_samples = [
         (1, "email", "admin@company.com"),
         (1, "password_hash", "$2b$12$encrypted..."),

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Enhanced Dark Web OSINT GUI - Feature Guide
 """
@@ -254,7 +254,7 @@ Version: 1.1 (Enhanced)
 if __name__ == "__main__":
     print(GUI_FEATURES)
     
-    # Also save to file with proper encoding
+                                            
     with open("GUI_HELP.txt", "w", encoding='utf-8') as f:
         f.write(GUI_FEATURES)
     print("\n[✓] Help guide saved to GUI_HELP.txt")

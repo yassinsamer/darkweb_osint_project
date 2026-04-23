@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Quick test script to verify Tor is working
 Run this to confirm your Tor SOCKS5 proxy is accessible

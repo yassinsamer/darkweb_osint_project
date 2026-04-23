@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Dark Web OSINT - Web Dashboard
 Run: python web_app.py
@@ -22,20 +22,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "findings.db")
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
 
-# --- Crawl state ---
+                     
 _crawl_lock = threading.Lock()
 _crawl_process = None
 _crawl_active = False
 _log_queue = queue.Queue(maxsize=500)
 
-
-# ─────────────────────────── helpers ────────────────────────────
+                                                                  
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
 
 def load_config():
     try:
@@ -44,11 +42,9 @@ def load_config():
     except Exception:
         return {}
 
-
 def save_config(data):
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
-
 
 def _col(conn, table, *candidates):
     """Return the first existing column name from candidates."""
@@ -58,7 +54,6 @@ def _col(conn, table, *candidates):
         if c in cols:
             return c
     return candidates[0]
-
 
 def _risk_label(score):
     if score is None:
@@ -72,22 +67,19 @@ def _risk_label(score):
         return "Medium"
     return "Low"
 
-
 def _push_log(line):
     try:
         _log_queue.put_nowait(line)
     except queue.Full:
         pass
 
-
-# ─────────────────────────── routes ─────────────────────────────
+                                                                  
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-
-# ── stats ──────────────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/stats")
 def api_stats():
@@ -124,8 +116,7 @@ def api_stats():
         "crawls": crawls, "target": company
     })
 
-
-# ── chart data ─────────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/chart-data")
 def api_chart_data():
@@ -136,7 +127,7 @@ def api_chart_data():
     company = cfg.get("target_company", "")
     conn = get_db()
 
-    # Risk distribution
+                       
     rows = conn.execute("""
         SELECT
             CASE
@@ -152,7 +143,7 @@ def api_chart_data():
     """, (company,)).fetchall()
     risk_dist = {r["level"]: r["cnt"] for r in rows}
 
-    # Findings timeline – last 14 days
+                                      
     timeline = {}
     for i in range(13, -1, -1):
         day = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
@@ -168,7 +159,7 @@ def api_chart_data():
         if r["day"] in timeline:
             timeline[r["day"]] = r["cnt"]
 
-    # Top keywords
+                  
     rows = conn.execute("""
         SELECT keyword, COUNT(*) as cnt
         FROM findings
@@ -182,8 +173,7 @@ def api_chart_data():
     conn.close()
     return jsonify({"risk_dist": risk_dist, "timeline": timeline, "keywords": keywords})
 
-
-# ── findings ───────────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/findings")
 def api_findings():
@@ -246,8 +236,7 @@ def api_findings():
     conn.close()
     return jsonify({"findings": findings, "total": total, "page": page, "per_page": per_page})
 
-
-# ── recent critical ────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/recent-critical")
 def api_recent_critical():
@@ -267,8 +256,7 @@ def api_recent_critical():
     conn.close()
     return jsonify([dict(r) for r in rows])
 
-
-# ── crawl history ──────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/crawl-history")
 def api_crawl_history():
@@ -287,13 +275,11 @@ def api_crawl_history():
         conn.close()
         return jsonify([])
 
-
-# ── config ─────────────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/config", methods=["GET"])
 def api_config_get():
     return jsonify(load_config())
-
 
 @app.route("/api/config", methods=["POST"])
 def api_config_post():
@@ -307,7 +293,7 @@ def api_config_post():
         cfg.setdefault("crawling", {})["max_workers"] = int(data["max_workers"])
     if "timeout" in data:
         cfg.setdefault("tor", {})["timeout"] = int(data["timeout"])
-    # Telegram fields
+                     
     if "telegram" in data:
         tg = data["telegram"]
         cfg.setdefault("alerts", {}).setdefault("telegram", {})
@@ -322,7 +308,6 @@ def api_config_post():
     save_config(cfg)
     return jsonify({"ok": True})
 
-
 @app.route("/api/telegram/test", methods=["POST"])
 def api_telegram_test():
     try:
@@ -333,8 +318,7 @@ def api_telegram_test():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
-
-# ── crawl control ──────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/crawl/start", methods=["POST"])
 def api_crawl_start():
@@ -371,7 +355,6 @@ def api_crawl_start():
     threading.Thread(target=_run, daemon=True).start()
     return jsonify({"ok": True})
 
-
 @app.route("/api/findings/clear", methods=["POST"])
 def api_findings_clear():
     """Delete all findings for the current target company and reset the URL queue"""
@@ -387,7 +370,6 @@ def api_findings_clear():
     _push_log(f"[~] Cleared {deleted} findings and URL queue for '{company}'")
     return jsonify({"ok": True, "deleted": deleted})
 
-
 @app.route("/api/crawl/stop", methods=["POST"])
 def api_crawl_stop():
     global _crawl_active, _crawl_process
@@ -398,13 +380,11 @@ def api_crawl_stop():
         _crawl_active = False
     return jsonify({"ok": True})
 
-
 @app.route("/api/crawl/status")
 def api_crawl_status():
     return jsonify({"active": _crawl_active})
 
-
-# ── live log stream (SSE) ──────────────────────────────────────
+                                                                 
 
 @app.route("/api/logs/stream")
 def api_log_stream():
@@ -414,13 +394,12 @@ def api_log_stream():
                 line = _log_queue.get(timeout=30)
                 yield f"data: {json.dumps(line)}\n\n"
             except queue.Empty:
-                yield "data: \n\n"   # heartbeat
+                yield "data: \n\n"              
 
     return Response(generate(), mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
-
-# ── report ────────────────────────────────────────────────────
+                                                                
 
 REPORT_PATH = os.path.join(BASE_DIR, "osint_full_report.pdf")
 
@@ -451,7 +430,6 @@ def api_report_generate():
     except Exception as e:
         return jsonify({"ok": False, "message": str(e)})
 
-
 @app.route("/api/report/download")
 def api_report_download():
     if not os.path.exists(REPORT_PATH):
@@ -459,7 +437,6 @@ def api_report_download():
     return send_file(REPORT_PATH, as_attachment=True,
                      download_name="osint_full_report.pdf",
                      mimetype="application/pdf")
-
 
 @app.route("/api/report/status")
 def api_report_status():
@@ -469,8 +446,7 @@ def api_report_status():
         mtime = datetime.fromtimestamp(os.path.getmtime(REPORT_PATH)).strftime("%Y-%m-%d %H:%M")
     return jsonify({"exists": exists, "generated_at": mtime})
 
-
-# ── export CSV ─────────────────────────────────────────────────
+                                                                 
 
 @app.route("/api/export/csv")
 def api_export_csv():
@@ -508,8 +484,7 @@ def api_export_csv():
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
-
-# ─────────────────────────── main ───────────────────────────────
+                                                                  
 
 if __name__ == "__main__":
     os.makedirs(os.path.join(BASE_DIR, "templates"), exist_ok=True)

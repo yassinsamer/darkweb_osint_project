@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Background daemon for continuous Dark Web OSINT monitoring
 Runs scheduled crawls periodically
@@ -18,7 +18,6 @@ from backup import backup_manager
 from health_monitor import health_monitor
 
 logger = get_logger(__name__)
-
 
 class OSINTDaemon:
     """Background daemon for OSINT monitoring"""
@@ -46,11 +45,11 @@ class OSINTDaemon:
             try:
                 with open(self.pid_file) as f:
                     pid = int(f.read())
-                    # Check if process exists
+                                             
                     os.kill(pid, 0)
                     return True
             except (OSError, ValueError):
-                # Process doesn't exist or pid is invalid
+                                                         
                 self.pid_file.unlink(missing_ok=True)
                 return False
         return False
@@ -93,13 +92,13 @@ class OSINTDaemon:
             else:
                 logger.debug(f"Outside crawl window (current hour: {current_hour})")
         
-        # Schedule periodic crawls
+                                  
         schedule.every(interval_minutes).minutes.do(run_if_in_window)
         
-        # Schedule daily backup at 3 AM
+                                       
         schedule.every().day.at("03:00").do(self._run_backup)
         
-        # Schedule health check every 30 minutes
+                                                
         schedule.every(30).minutes.do(self._check_health)
         
         logger.info(f"Scheduled jobs configured:")
@@ -128,7 +127,7 @@ class OSINTDaemon:
                     backup_file=result.get('backup_file'),
                     size_mb=result.get('size_mb')
                 )
-                # Cleanup old backups
+                                     
                 cleanup = backup_manager.cleanup_old_backups()
                 logger.info(f"Cleanup: {cleanup}")
             else:
@@ -171,20 +170,20 @@ class OSINTDaemon:
         self._write_pid()
         self.running = True
         
-        # Register signal handlers
+                                  
         signal.signal(signal.SIGTERM, self._signal_handler)
         signal.signal(signal.SIGINT, self._signal_handler)
         
-        # Schedule jobs
+                       
         self.schedule_jobs()
         
         logger.info("Daemon started successfully. Entering job loop...")
         
-        # Main loop
+                   
         while self.running:
             try:
                 schedule.run_pending()
-                time.sleep(60)  # Check every minute
+                time.sleep(60)                      
             except KeyboardInterrupt:
                 logger.info("Received interrupt signal")
                 break
@@ -214,7 +213,6 @@ class OSINTDaemon:
             print("✗ Daemon is not running")
             return False
 
-
 def main():
     """Main entry point"""
     daemon = OSINTDaemon()
@@ -227,7 +225,7 @@ def main():
         elif command == "--stop":
             if daemon._is_already_running():
                 logger.info("Stopping existing daemon...")
-                # In production, would use proper signal handling
+                                                                 
                 daemon._remove_pid()
                 print("Daemon stop signal sent")
             else:
@@ -252,7 +250,6 @@ def main():
         print("  python daemon.py --start    # Start the daemon")
         print("  python daemon.py --status   # Check daemon status")
         print("  python daemon.py --stop     # Stop the daemon")
-
 
 if __name__ == "__main__":
     main()

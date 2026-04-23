@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Enhanced Report Generator for Dark Web OSINT
 Generates formal PDF reports with risk assessments and mitigation advice
@@ -18,7 +18,6 @@ from alerts import AlertManager
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 class EnhancedReportGenerator:
     """Generate formal PDF reports with risk assessments"""
@@ -45,7 +44,7 @@ class EnhancedReportGenerator:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        # Get high-risk findings
+                                
         cursor.execute("""
             SELECT f.id, f.url, f.keyword, f.confidence, f.risk_score,
                    f.snippet, f.classification, f.found_at,
@@ -58,7 +57,7 @@ class EnhancedReportGenerator:
 
         findings = cursor.fetchall()
 
-        # Get statistics
+                        
         cursor.execute("""
             SELECT
                 COUNT(DISTINCT f.id) as total_findings,
@@ -109,7 +108,7 @@ class EnhancedReportGenerator:
             ]
         }
 
-        # Default advice based on risk level
+                                            
         if risk_score >= 85:
             base_advice = [
                 "URGENT: Immediate action required",
@@ -132,7 +131,7 @@ class EnhancedReportGenerator:
                 "Monitor for related findings"
             ]
 
-        # Add classification-specific advice
+                                            
         if classification in advice:
             base_advice.extend(advice[classification])
 
@@ -155,13 +154,13 @@ class EnhancedReportGenerator:
         styles = getSampleStyleSheet()
         story = []
 
-        # Custom styles
+                       
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=24,
             spaceAfter=30,
-            alignment=1  # Center
+            alignment=1          
         )
 
         subtitle_style = ParagraphStyle(
@@ -171,13 +170,13 @@ class EnhancedReportGenerator:
             spaceAfter=20
         )
 
-        # Title page
+                    
         story.append(Paragraph("DARK WEB OSINT SECURITY REPORT", title_style))
         story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}", styles['Normal']))
         story.append(Paragraph(f"Analysis Period: Last {days_back} days", styles['Normal']))
         story.append(Spacer(1, 0.5*inch))
 
-        # Executive Summary
+                           
         story.append(Paragraph("EXECUTIVE SUMMARY", subtitle_style))
 
         findings, stats = self.get_findings_data(days_back)
@@ -198,15 +197,15 @@ class EnhancedReportGenerator:
         story.append(Paragraph(summary_text, styles['Normal']))
         story.append(Spacer(1, 0.3*inch))
 
-        # Findings Table
+                        
         if findings:
             story.append(Paragraph("DETAILED FINDINGS", subtitle_style))
 
-            # Table headers
+                           
             table_data = [['Risk Level', 'Score', 'Source URL', 'Keyword', 'Classification', 'Found Date']]
 
-            # Add findings data
-            for finding in findings[:50]:  # Limit to top 50 findings
+                               
+            for finding in findings[:50]:                            
                 risk_level, color = self.get_risk_level(finding[4])
                 table_data.append([
                     risk_level,
@@ -217,7 +216,7 @@ class EnhancedReportGenerator:
                     datetime.fromisoformat(finding[7]).strftime('%Y-%m-%d %H:%M')
                 ])
 
-            # Create table
+                          
             table = Table(table_data, colWidths=[1*inch, 0.8*inch, 2.5*inch, 1*inch, 1.2*inch, 1.2*inch])
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -233,12 +232,12 @@ class EnhancedReportGenerator:
             story.append(table)
             story.append(Spacer(1, 0.3*inch))
 
-            # Detailed Analysis Section
+                                       
             story.append(Paragraph("CRITICAL & HIGH-RISK ANALYSIS", subtitle_style))
 
             critical_findings = [f for f in findings if f[4] >= 70]
 
-            for i, finding in enumerate(critical_findings[:10]):  # Top 10 critical findings
+            for i, finding in enumerate(critical_findings[:10]):                            
                 risk_level, color = self.get_risk_level(finding[4])
 
                 story.append(HRFlowable(width="100%", thickness=1, color=colors.grey, spaceBefore=10, spaceAfter=10))
@@ -257,7 +256,7 @@ class EnhancedReportGenerator:
 
                 story.append(Paragraph(details, styles['Normal']))
 
-                # Mitigation advice
+                                   
                 story.append(Paragraph("<b>Recommended Actions:</b>", styles['Heading4']))
                 mitigation = self.get_mitigation_advice(finding)
                 for action in mitigation:
@@ -265,14 +264,14 @@ class EnhancedReportGenerator:
 
                 story.append(Spacer(1, 0.2*inch))
 
-        # Footer
+                
         story.append(PageBreak())
         story.append(Paragraph("REPORT FOOTER", subtitle_style))
         story.append(Paragraph("This report was generated automatically by the Dark Web OSINT system.", styles['Normal']))
         story.append(Paragraph("For questions or concerns, contact the security team.", styles['Normal']))
         story.append(Paragraph(f"Report ID: {datetime.now().strftime('%Y%m%d_%H%M%S')}", styles['Normal']))
 
-        # Build PDF
+                   
         doc.build(story)
         print(f"[+] PDF report generated: {output_path}")
         return output_path
@@ -282,11 +281,11 @@ class EnhancedReportGenerator:
         print("[*] Checking for critical findings to alert...")
 
         findings, stats = self.get_findings_data(days_back)
-        critical_findings = [f for f in findings if f[4] >= 85]  # Critical threshold
+        critical_findings = [f for f in findings if f[4] >= 85]                      
 
         alerts_sent = 0
         for finding in critical_findings:
-            # Create finding dict for alert manager
+                                                   
             finding_dict = {
                 'id': finding[0],
                 'url': finding[1],
@@ -297,27 +296,26 @@ class EnhancedReportGenerator:
                 'classification': finding[6] or 'unknown'
             }
 
-            # Send alert - implementation would go here
+                                                       
             alerts_sent += 1
 
         print(f"[+] Alerts sent: {alerts_sent}")
         return alerts_sent
 
-
 if __name__ == "__main__":
     import sys
     
-    # Default parameters
+                        
     output_file = "osint_report.pdf"
     days = 7
     
-    # Parse command line arguments
+                                  
     if len(sys.argv) > 1:
         output_file = sys.argv[1]
     if len(sys.argv) > 2:
         days = int(sys.argv[2])
     
-    # Generate report
+                     
     try:
         generator = EnhancedReportGenerator()
         generator.generate_pdf_report(output_path=output_file, days_back=days)
@@ -340,13 +338,13 @@ if __name__ == "__main__":
         """Generate complete report with PDF and alerts"""
         print(f"[*] Generating comprehensive OSINT report for last {days_back} days...")
 
-        # Generate PDF report
+                             
         pdf_path = self.generate_pdf_report(days_back=days_back)
 
-        # Send critical alerts
+                              
         alerts_sent = self.send_critical_alerts(days_back=1)
 
-        # Print summary
+                       
         findings, stats = self.get_findings_data(days_back)
 
         print("\n" + "="*60)
@@ -361,7 +359,6 @@ if __name__ == "__main__":
         print("="*60)
 
         return pdf_path, alerts_sent
-
 
 if __name__ == "__main__":
     import sys

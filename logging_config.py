@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Structured Logging System for Dark Web OSINT
 Provides JSON-formatted logs, file rotation, and audit trails
@@ -10,7 +10,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-
 
 class StructuredFormatter(logging.Formatter):
     """Custom formatter that outputs structured JSON logs"""
@@ -27,16 +26,15 @@ class StructuredFormatter(logging.Formatter):
             'line': record.lineno,
         }
         
-        # Add exception info if present
+                                       
         if record.exc_info:
             log_data['exception'] = self.formatException(record.exc_info)
         
-        # Add extra fields if provided via the extra parameter
+                                                              
         if hasattr(record, 'extra_fields'):
             log_data.update(record.extra_fields)
         
         return json.dumps(log_data)
-
 
 class OSINTLogger:
     """Centralized logger for OSINT system"""
@@ -55,14 +53,14 @@ class OSINTLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.DEBUG)
         
-        # Remove any existing handlers to avoid duplicates
+                                                          
         self.logger.handlers.clear()
         
-        # File handler with rotation (10MB max, keep 10 files)
+                                                              
         log_file = self.log_dir / f"{name.replace('.', '_')}.log"
         file_handler = logging.handlers.RotatingFileHandler(
             log_file,
-            maxBytes=10*1024*1024,  # 10MB
+            maxBytes=10*1024*1024,        
             backupCount=10,
             encoding='utf-8'
         )
@@ -70,7 +68,7 @@ class OSINTLogger:
         file_handler.setFormatter(StructuredFormatter())
         self.logger.addHandler(file_handler)
         
-        # Console handler (INFO level for visibility)
+                                                     
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
         console_formatter = logging.Formatter(
@@ -150,10 +148,8 @@ class OSINTLogger:
         """Log error with full context"""
         self.error(error_message, **context_dict)
 
-
-# Export a default logger instance
+                                  
 logger = OSINTLogger('osint_system')
-
 
 def get_logger(name):
     """Factory function to create loggers for specific modules"""

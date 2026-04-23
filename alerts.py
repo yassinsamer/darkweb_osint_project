@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Alert Manager for Dark Web OSINT
 Sends Telegram alerts for high-risk findings with deduplication
@@ -13,7 +13,6 @@ from pathlib import Path
 from logging_config import get_logger
 
 logger = get_logger(__name__)
-
 
 class AlertManager:
     """Manages alert deduplication and Telegram delivery"""
@@ -105,7 +104,7 @@ class AlertManager:
         Returns:
             dict: {'sent': bool, 'chat_id': str, 'timestamp': str, 'message': str}
         """
-        # Check for duplicate
+                             
         if self.is_duplicate(finding.get('url'), finding.get('keyword'),
                            finding.get('snippet')):
             logger.info(
@@ -120,10 +119,10 @@ class AlertManager:
             }
 
         try:
-            # Send Telegram alert
+                                 
             telegram_result = self._send_telegram_alert(finding, risk_level, chat_id)
             if telegram_result['sent']:
-                # Record alert
+                              
                 self._record_alert(finding, risk_level, chat_id)
                 logger.log_alert(
                     finding.get('id'),
@@ -151,7 +150,7 @@ class AlertManager:
     
     def _send_telegram_alert(self, finding, risk_level, chat_id=None):
         """Send Telegram alert"""
-        # Use configured chat ID if not provided
+                                                
         if not chat_id:
             chat_id = self.config.get('alerts', {}).get('telegram', {}).get('chat_id')
 
@@ -159,10 +158,10 @@ class AlertManager:
             return {'sent': False, 'message': 'No Telegram chat ID configured'}
 
         try:
-            # Build Telegram message
+                                    
             message = self._build_telegram_message(finding, risk_level)
 
-            # Send via Telegram
+                               
             success = self._send_telegram_message(chat_id, message)
 
             if success:
@@ -267,7 +266,7 @@ class AlertManager:
             c = conn.cursor()
             now = datetime.utcnow().isoformat()
             
-            # Try to update existing record
+                                           
             c.execute("""
                 UPDATE alert_history
                 SET last_alert_time = ?, alert_count = alert_count + 1
@@ -275,7 +274,7 @@ class AlertManager:
             """, (now, finding_hash))
             
             if c.rowcount == 0:
-                # Insert new record
+                                   
                 c.execute("""
                     INSERT INTO alert_history
                     (finding_hash, finding_id, risk_level, first_alert_time, 
@@ -339,7 +338,7 @@ class AlertManager:
 
             bot_info = response.json()
             if bot_info.get('ok'):
-                # Test sending a message
+                                        
                 test_message = "🧪 *OSINT Alert System Test*\n\n✅ Telegram integration working!\n⏰ " + datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
 
                 api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -372,6 +371,5 @@ class AlertManager:
         except Exception as e:
             return {'success': False, 'message': f'Error: {e}'}
 
-
-# Export singleton instance
+                           
 alert_manager = AlertManager()

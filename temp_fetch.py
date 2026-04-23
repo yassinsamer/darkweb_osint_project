@@ -11,6 +11,6 @@ try:
     print('Status:', response.status_code)
     print('Content length:', len(response.text))
     print('Content:')
-    print(repr(response.text))  # use repr to see exact content
+    print(repr(response.text))                                 
 except Exception as e:
     print('Error:', e)

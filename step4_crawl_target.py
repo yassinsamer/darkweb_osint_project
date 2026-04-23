@@ -2,7 +2,7 @@ import requests
 import sqlite3
 from bs4 import BeautifulSoup
 
-# ---------------- TOR CONFIG ----------------
+                                              
 TOR_PROXY = "socks5h://127.0.0.1:9150"
 
 session = requests.Session()
@@ -16,7 +16,7 @@ HEADERS = {
 
 KEYWORDS = ["leak", "password", "email"]
 
-# ---------------- FETCH PAGE ----------------
+                                              
 def fetch(url, timeout=60):
     try:
         r = session.get(url, headers=HEADERS, timeout=timeout)
@@ -26,7 +26,7 @@ def fetch(url, timeout=60):
         print(f"[!] Fetch failed: {e}")
         return None
 
-# ---------------- CLEAN TEXT ----------------
+                                              
 def extract_clean_text(html):
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup(["script", "style", "noscript"]):
@@ -35,7 +35,7 @@ def extract_clean_text(html):
     text = soup.get_text(separator=" ")
     return text
 
-# ---------------- SAVE MATCHES ----------------
+                                                
 def save_matches(text, source_url):
     conn = sqlite3.connect("findings.db")
     c = conn.cursor()
@@ -54,7 +54,7 @@ def save_matches(text, source_url):
     conn.commit()
     conn.close()
 
-# ---------------- MAIN ----------------
+                                        
 if __name__ == "__main__":
     TARGET_ONION = "http://juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion/"
 

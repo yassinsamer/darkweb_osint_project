@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 False Positive Filter for Dark Web OSINT
 Reduces alert noise through configurable whitelisting
@@ -9,7 +9,6 @@ import re
 from logging_config import get_logger
 
 logger = get_logger(__name__)
-
 
 class FalsePositiveFilter:
     """Filters false positives and known non-threats"""
@@ -70,20 +69,20 @@ class FalsePositiveFilter:
         Returns:
             tuple: (should_filter: bool, reason: str)
         """
-        # Check URL whitelist
+                             
         if self._is_url_whitelisted(finding.get('url')):
             return True, 'URL on whitelist'
         
-        # Check keyword whitelist
+                                 
         if self._is_keyword_whitelisted(finding.get('keyword')):
             return True, 'Keyword on whitelist'
         
-        # Check common false positives
+                                      
         if self._is_common_fp(finding):
             reason = self._get_common_fp_reason(finding)
             return True, reason
         
-        # Check if snippet matches common patterns
+                                                  
         if self._is_false_positive_snippet(finding.get('snippet', '')):
             return True, 'Generic/common snippet pattern'
         
@@ -118,14 +117,14 @@ class FalsePositiveFilter:
         snippet = finding.get('snippet', '').lower()
         data_value = finding.get('data_value', '').lower()
         
-        # Check test data
+                         
         for pattern in self.common_false_positives['test_data']:
             if re.search(pattern, snippet, re.IGNORECASE):
                 return True
             if re.search(pattern, data_value, re.IGNORECASE):
                 return True
         
-        # Check documentation
+                             
         for pattern in self.common_false_positives['documentation']:
             if re.search(pattern, snippet, re.IGNORECASE):
                 return True
@@ -153,7 +152,7 @@ class FalsePositiveFilter:
         
         snippet_lower = snippet.lower()
         
-        # Generic content that's likely not a real threat
+                                                         
         generic_patterns = [
             r'how to|tutorial|guide|documentation',
             r'example\s*only|demo\s*purposes?|test\s*data',
@@ -242,6 +241,5 @@ class FalsePositiveFilter:
         except Exception as e:
             logger.error(f"Failed to save config: {e}")
 
-
-# Export singleton instance
+                           
 fp_filter = FalsePositiveFilter()

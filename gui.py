@@ -27,7 +27,7 @@ class DarkWebGUI(tk.Tk):
         self.create_widgets()
 
     def create_widgets(self):
-        # Top Control Panel
+                           
         control_frame = ttk.Frame(self, padding=10)
         control_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
@@ -44,21 +44,21 @@ class DarkWebGUI(tk.Tk):
         self.status_label = ttk.Label(self, text="Ready", relief=tk.SUNKEN, anchor=tk.W, font=(None, 9))
         self.status_label.pack(side=tk.BOTTOM, fill=tk.X)
 
-        # Create notebook for tabbed interface
+                                              
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Tab 1: Dashboard
+                          
         self.dashboard_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.dashboard_frame, text="📈 Dashboard")
         self.create_dashboard_tab()
 
-        # Tab 2: Findings
+                         
         self.findings_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.findings_frame, text="🔍 All Findings")
         self.create_findings_tab()
 
-        # Tab 3: Logs
+                     
         self.logs_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.logs_frame, text="📋 Logs")
         self.create_logs_tab()
@@ -80,15 +80,15 @@ class DarkWebGUI(tk.Tk):
             label.grid(row=0, column=idx, padx=10, pady=5, sticky=tk.W)
             self.summary_labels[name] = label
 
-        # Content frame with scrollbar
+                                      
         content_frame = ttk.Frame(self.dashboard_frame)
         content_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Create paned window for resizable sections
+                                                    
         paned = ttk.PanedWindow(content_frame, orient=tk.HORIZONTAL)
         paned.pack(fill=tk.BOTH, expand=True)
 
-        # Left side: URLs and Keywords
+                                      
         left_frame = ttk.LabelFrame(paned, text="Top Data", padding=5)
         paned.add(left_frame, weight=1)
 
@@ -102,7 +102,7 @@ class DarkWebGUI(tk.Tk):
         self.top_keywords = scrolledtext.ScrolledText(left_frame, wrap=tk.WORD, state="disabled", height=6)
         self.top_keywords.pack(fill=tk.BOTH, expand=True, pady=2)
 
-        # Right side: Risk and Critical data
+                                            
         right_frame = ttk.LabelFrame(paned, text="Risk Assessment", padding=5)
         paned.add(right_frame, weight=1)
 
@@ -130,7 +130,7 @@ class DarkWebGUI(tk.Tk):
         ttk.Button(filter_frame, text="📥 Export Findings", command=self.export_findings).pack(side=tk.LEFT, padx=5)
         ttk.Button(filter_frame, text="🔄 Reload", command=self.load_findings).pack(side=tk.LEFT, padx=5)
 
-        # Create treeview for findings
+                                      
         tree_frame = ttk.Frame(self.findings_frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
@@ -156,7 +156,7 @@ class DarkWebGUI(tk.Tk):
         self.findings_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Bind right-click for details
+                                      
         self.findings_tree.bind("<Button-3>", self.show_finding_details)
 
     def create_logs_tab(self):
@@ -225,7 +225,7 @@ class DarkWebGUI(tk.Tk):
         process.wait()
         self.log(f"[+] Crawl completed (exit code {process.returncode})")
         
-        # Auto-generate report after crawling
+                                             
         self.log("[~] Auto-generating report...")
         self.generate_report()
         
@@ -275,7 +275,7 @@ class DarkWebGUI(tk.Tk):
 
     def load_findings(self):
         """Load findings from database into treeview"""
-        # Clear existing items
+                              
         for item in self.findings_tree.get_children():
             self.findings_tree.delete(item)
 
@@ -288,7 +288,7 @@ class DarkWebGUI(tk.Tk):
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
-            # Get risk filter
+                             
             risk_filter = self.risk_filter.get()
             
             query = "SELECT id, url, keyword, risk_score, confidence, classification, found_at FROM findings"
@@ -312,7 +312,7 @@ class DarkWebGUI(tk.Tk):
             for finding in findings:
                 finding_id, url, keyword, risk_score, confidence, classification, found_at = finding
                 
-                # Determine risk level
+                                      
                 if risk_score >= 85:
                     risk_level = "🔴 CRITICAL"
                 elif risk_score >= 70:
@@ -567,7 +567,6 @@ Recommended Actions:
         self.output.insert(tk.END, message + "\n")
         self.output.see(tk.END)
         self.output.configure(state="disabled")
-
 
 if __name__ == "__main__":
     app = DarkWebGUI()

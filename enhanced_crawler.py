@@ -96,7 +96,7 @@ class EnhancedCrawler:
         return None
 
     def clean_html(self, html: str) -> str:
-        # self.db.log_crawl(url, "failed", error="Max retries exceeded", duration=0)
+                                                                                    
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(html, "html.parser")
         
@@ -104,7 +104,7 @@ class EnhancedCrawler:
             tag.decompose()
 
         text = soup.get_text(separator=" ")
-        # Remove excessive whitespace
+                                     
         text = re.sub(r'\s+', ' ', text).strip()
         return text
 
@@ -117,7 +117,7 @@ class EnhancedCrawler:
             try:
                 matches = re.findall(pattern, text, re.IGNORECASE)
                 if matches:
-                    extracted[pattern_name] = list(set(matches))[:50]  # Limit to 50 unique per type
+                    extracted[pattern_name] = list(set(matches))[:50]                               
                     print(f"[+] Found {len(matches)} {pattern_name}(s)")
                     for match in list(set(matches))[:5]:
                         self.db.add_extracted_data(source_url, match, pattern_name)
@@ -129,7 +129,7 @@ class EnhancedCrawler:
     def search_keywords(self, text: str, source_url: str) -> Dict[str, float]:
         """Search for keywords AND company name with confidence scoring."""
         target_company = self.config.get("target_company", "")
-        # Always include the company name as a search term
+                                                          
         keywords = list(self.config.get("keywords", []))
         if target_company and target_company.lower() not in [k.lower() for k in keywords]:
             keywords.append(target_company)
@@ -160,7 +160,7 @@ class EnhancedCrawler:
 
         target_company = self.config.get("target_company", "").lower()
         for keyword, confidence in keyword_matches.items():
-            # Company name on a dark web page is inherently high risk
+                                                                     
             if target_company and keyword.lower() == target_company:
                 weight = 20
             else:
@@ -201,13 +201,13 @@ class EnhancedCrawler:
 
         return score, risk_level, " ".join(sorted(recommendations))
 
-    # Domains that are search/index engines — never generate findings from them
+                                                                               
     DISCOVERY_ONLY_DOMAINS = {
-        "juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion",  # Ahmia
-        "torchdeedp3i2jigzjdmfpn5ttjhthh5wbmda2rr3jvqjg5p77c54dqd.onion",  # Torch
-        "tordexu73joywapk2txdr54jed4imqledpcvcuf75qsas2gwdgksvnyd.onion",   # TorDex
-        "msydqstlz2kzerdg.onion",   # old Ahmia
-        "expyuzz4wqqyqhjn.onion",   # Tor Project (dead)
+        "juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion",         
+        "torchdeedp3i2jigzjdmfpn5ttjhthh5wbmda2rr3jvqjg5p77c54dqd.onion",         
+        "tordexu73joywapk2txdr54jed4imqledpcvcuf75qsas2gwdgksvnyd.onion",           
+        "msydqstlz2kzerdg.onion",              
+        "expyuzz4wqqyqhjn.onion",                       
     }
 
     def crawl_url(self, url: str) -> bool:
@@ -227,11 +227,11 @@ class EnhancedCrawler:
         if not html:
             return False
 
-        # Extract clean text
+                            
         text = self.clean_html(html)
         print(f"[+] Page size: {len(text)} characters")
 
-        # Only analyse pages that mention the target company
+                                                            
         target_company = self.config.get("target_company", "")
         if target_company and target_company.lower() not in text.lower():
             print(f"[-] '{target_company}' not found on page — skipping")
@@ -239,20 +239,20 @@ class EnhancedCrawler:
 
         print(f"[+] '{target_company}' mentioned on page — analysing...")
 
-        # Search keywords
+                         
         keyword_matches = self.search_keywords(text, url)
 
-        # Extract patterns
+                          
         extracted = self.extract_patterns(text, url)
 
-        # Risk scoring
+                      
         risk_score, risk_level, recommendations = self.score_risk(keyword_matches, extracted)
         self.db.add_risk_assessment(url, risk_score, risk_level, recommendations)
         self.db.update_findings_risk(url, risk_score, risk_level)
         print(f"[+] Risk score: {risk_score} ({risk_level})")
         print(f"[+] Recommendation: {recommendations}")
 
-        # Send Telegram alert for High / Critical findings
+                                                          
         if risk_score >= 70 and (keyword_matches or extracted):
             top_keyword = max(keyword_matches, key=keyword_matches.get) if keyword_matches else "N/A"
             snippet = ""
@@ -307,7 +307,7 @@ class EnhancedCrawler:
 if __name__ == "__main__":
     crawler = EnhancedCrawler()
     
-    # Get seed URLs from config
+                               
     seed_urls = crawler.config.get("seed_urls", [])
     if seed_urls:
         crawler.crawl_batch(seed_urls)

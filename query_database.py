@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Database query tool for analyzing findings
 """
@@ -75,7 +75,7 @@ class FindingsAnalyzer:
                 print(f"{data_type.upper()}: {count} extracted")
             print()
         
-        # Show sample data for each type
+                                        
         data_types = self.query("SELECT DISTINCT data_type FROM extracted_data ORDER BY data_type")
         
         for (data_type,) in data_types:
@@ -101,7 +101,7 @@ class FindingsAnalyzer:
         for status, count in results:
             print(f"{status.upper()}: {count}")
         
-        # Average duration
+                          
         duration = self.query("SELECT AVG(duration_seconds) FROM crawl_history WHERE status='success'")
         if duration[0][0]:
             print(f"Avg Duration: {duration[0][0]:.2f}s")
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     import sys
     from enhanced_database import FindingsDB
     
-    FindingsDB()  # Ensure database schema is up to date before queries
+    FindingsDB()                                                       
     analyzer = FindingsAnalyzer()
     
     if len(sys.argv) > 1:

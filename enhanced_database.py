@@ -12,7 +12,7 @@ class FindingsDB:
         conn = sqlite3.connect(self.db_name)
         c = conn.cursor()
 
-        # Main findings table (schema matches init_database.py)
+                                                               
         c.execute("""
             CREATE TABLE IF NOT EXISTS findings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,13 +27,13 @@ class FindingsDB:
             )
         """)
 
-        # Migrate existing DB: add target_company if missing
+                                                            
         try:
             c.execute("ALTER TABLE findings ADD COLUMN target_company TEXT DEFAULT ''")
         except sqlite3.OperationalError:
-            pass  # Column already exists
+            pass                         
 
-        # Crawl history for tracking progress
+                                             
         c.execute("""
             CREATE TABLE IF NOT EXISTS crawl_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,7 +46,7 @@ class FindingsDB:
             )
         """)
 
-        # Extracted patterns (emails, IPs, etc)
+                                               
         c.execute("""
             CREATE TABLE IF NOT EXISTS extracted_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +57,7 @@ class FindingsDB:
             )
         """)
 
-        # URL queue for distributed crawling
+                                            
         c.execute("""
             CREATE TABLE IF NOT EXISTS url_queue (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,7 +69,7 @@ class FindingsDB:
             )
         """)
 
-        # Risk assessment summary per URL
+                                         
         c.execute("""
             CREATE TABLE IF NOT EXISTS risk_assessment (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +81,7 @@ class FindingsDB:
             )
         """)
 
-        # Create indexes for performance
+                                        
         c.execute("CREATE INDEX IF NOT EXISTS idx_keyword ON findings(keyword)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_found_at ON findings(found_at)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_url_status ON crawl_history(url, status)")
@@ -124,7 +124,7 @@ class FindingsDB:
             )
             conn.commit()
         except sqlite3.IntegrityError:
-            pass  # Duplicate entry
+            pass                   
         finally:
             conn.close()
 
@@ -179,7 +179,7 @@ class FindingsDB:
                 (url, priority)
             )
         except sqlite3.IntegrityError:
-            # URL already exists — reset it to pending so it gets re-crawled
+                                                                            
             c.execute(
                 "UPDATE url_queue SET status='pending', priority=?, processed_at=NULL WHERE url=?",
                 (priority, url)

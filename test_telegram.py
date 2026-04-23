@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Quick Telegram Configuration Test
 Run this after setting up your Telegram bot to verify it's working
@@ -9,7 +9,6 @@ import requests
 import sys
 from datetime import datetime
 from datetime import datetime
-
 
 def test_telegram():
     """Test Telegram configuration"""
@@ -42,7 +41,7 @@ def test_telegram():
 
     print("🔍 Testing Telegram bot connection...")
 
-    # Test bot token
+                    
     try:
         api_url = f"https://api.telegram.org/bot{bot_token}/getMe"
         response = requests.get(api_url, timeout=10)
@@ -59,7 +58,7 @@ def test_telegram():
         print(f"❌ Bot verification failed: {e}")
         return False
 
-    # Test sending message
+                          
     print("📤 Sending test message...")
     test_message = f"""🧪 *OSINT Alert System Test*
 
@@ -95,7 +94,6 @@ This is a test message from your Dark Web OSINT system.
         print(f"❌ Test message failed: {e}")
         return False
 
-
 def test_alert_manager():
     """Test the AlertManager class"""
     try:
@@ -105,7 +103,7 @@ def test_alert_manager():
 
         am = AlertManager()
 
-        # Create a unique test finding to bypass deduplication
+                                                              
         unique_suffix = datetime.utcnow().strftime('%Y%m%d%H%M%S')
         test_finding = {
             'id': 999,
@@ -117,7 +115,7 @@ def test_alert_manager():
             'classification': 'credential_leak'
         }
 
-        # Test sending alert
+                            
         result = am.send_alert(test_finding, 'high')
 
         if result['sent']:
@@ -131,7 +129,6 @@ def test_alert_manager():
     except Exception as e:
         print(f"❌ AlertManager test failed: {e}")
         return False
-
 
 if __name__ == "__main__":
     print("🧪 Telegram Alert System Test")

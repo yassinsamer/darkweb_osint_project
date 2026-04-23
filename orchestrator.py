@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Master orchestrator for automated dark web OSINT crawling
 Coordinates: Ahmia parsing -> URL discovery -> Distributed crawling
@@ -15,7 +15,7 @@ from enhanced_crawler import EnhancedCrawler
 from enhanced_database import FindingsDB
 from urllib.parse import urlparse
 
-# Regex that finds any .onion URL anywhere in raw HTML
+                                                      
 _ONION_RE = re.compile(r'https?://[a-z2-7]{16,56}\.onion[^\s"\'<>]*', re.IGNORECASE)
 
 class DarkWebOrchestrator:
@@ -35,11 +35,11 @@ class DarkWebOrchestrator:
             print(f"[!] Config file not found: {self.config_path}")
             self.config = {}
 
-    # Domains used only for search/discovery — never queue their own subpages
+                                                                             
     _SEARCH_ENGINE_HOSTS = {
-        "juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion",  # Ahmia
-        "torchdeedp3i2jigzjdmfpn5ttjhthh5wbmda2rr3jvqjg5p77c54dqd.onion",  # Torch
-        "tordexu73joywapk2txdr54jed4imqledpcvcuf75qsas2gwdgksvnyd.onion",   # TorDex
+        "juhanurmihxlp77nkq76byazcldy2hlmovfu2epvl5ankdibsot4csyd.onion",         
+        "torchdeedp3i2jigzjdmfpn5ttjhthh5wbmda2rr3jvqjg5p77c54dqd.onion",         
+        "tordexu73joywapk2txdr54jed4imqledpcvcuf75qsas2gwdgksvnyd.onion",           
     }
 
     def _extract_onion_urls(self, html, exclude_hosts=None):
@@ -187,7 +187,7 @@ class DarkWebOrchestrator:
         seed_urls = self.config.get("seed_urls", [])
         print(f"\n[*] Adding {len(seed_urls)} seed URLs to queue...")
         for url in seed_urls:
-            self.db.add_url_to_queue(url, priority=10)  # High priority
+            self.db.add_url_to_queue(url, priority=10)                 
 
     def run_full_cycle(self):
         """Execute full crawling cycle"""
@@ -197,25 +197,25 @@ class DarkWebOrchestrator:
         print(f"{'#'*60}\n")
 
         try:
-            # Reset processed URLs so fresh discovery re-queues them
+                                                                    
             reset_count = self.db.reset_queue()
             print(f"[*] Reset {reset_count} previously-processed URLs to pending")
 
-            # Add seed URLs
+                           
             self.add_seed_urls()
 
-            # Search Ahmia for target company to find relevant .onion URLs
+                                                                          
             self.discover_urls_from_ahmia()
 
-            # Also search Torch for target company
+                                                  
             target_company = self.config.get("target_company")
             if target_company and target_company != "example_company":
                 self.discover_urls_from_torch(target_company)
 
-            # Crawl discovered URLs (search engines are skipped automatically)
+                                                                              
             self.crawl_queue_distributed()
             
-            # Print statistics
+                              
             self.crawler.print_stats()
 
         except Exception as e:

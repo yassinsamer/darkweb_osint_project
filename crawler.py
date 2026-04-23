@@ -6,7 +6,7 @@ TOR_PROXY = "socks5h://127.0.0.1:9150"
 session = requests.Session()
 session.proxies = {"http": TOR_PROXY, "https": TOR_PROXY}
 
-# Browser-like headers (important to avoid 403)
+                                               
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -24,7 +24,7 @@ def fetch_onion_page(url, timeout=60):
         return r.text
     except requests.exceptions.HTTPError as e:
         print(f"[!] HTTP error: {e}")
-        # Print a small preview (sometimes includes reason)
+                                                           
         if hasattr(e, "response") and e.response is not None:
             print("[!] Response preview:", e.response.text[:200])
     except Exception as e:

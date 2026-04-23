@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Telegram Bot Setup Helper for Dark Web OSINT Alerts
 Helps users create and configure Telegram bots for alert notifications
@@ -9,7 +9,6 @@ import requests
 import sys
 from pathlib import Path
 from datetime import datetime
-
 
 def setup_telegram_bot():
     """Interactive setup for Telegram bot configuration"""
@@ -24,13 +23,13 @@ def setup_telegram_bot():
     print("4. Copy the bot token provided by BotFather")
     print()
 
-    # Get bot token
+                   
     bot_token = input("🔑 Enter your Telegram bot token: ").strip()
     if not bot_token:
         print("❌ Bot token is required!")
         return False
 
-    # Test bot token
+                    
     print("🔍 Testing bot token...")
     try:
         api_url = f"https://api.telegram.org/bot{bot_token}/getMe"
@@ -55,7 +54,7 @@ def setup_telegram_bot():
     print("3. The bot will respond (or you can send /start)")
     print()
 
-    # Get chat ID
+                 
     chat_id = input("🆔 Enter your Telegram chat ID (or press Enter to auto-detect): ").strip()
 
     if not chat_id:
@@ -74,7 +73,7 @@ def setup_telegram_bot():
         print("❌ Chat ID is required!")
         return False
 
-    # Test sending a message
+                            
     print("📤 Testing message sending...")
     test_message = f"""
 🧪 *OSINT Alert System Setup Complete!*
@@ -110,7 +109,7 @@ This is a test message from your Dark Web OSINT system.
         print(f"❌ Failed to send test message: {e}")
         return False
 
-    # Update config.json
+                        
     print("💾 Updating configuration...")
     try:
         config_path = "config.json"
@@ -162,7 +161,6 @@ This is a test message from your Dark Web OSINT system.
     print()
     return True
 
-
 def get_chat_id(bot_token):
     """Try to auto-detect chat ID from recent updates"""
     try:
@@ -172,7 +170,7 @@ def get_chat_id(bot_token):
 
         updates = response.json()
         if updates.get('ok') and updates.get('result'):
-            # Get the most recent message
+                                         
             for update in reversed(updates['result']):
                 if 'message' in update:
                     chat_id = update['message']['chat']['id']
@@ -181,7 +179,6 @@ def get_chat_id(bot_token):
         print(f"Auto-detection failed: {e}")
 
     return None
-
 
 def test_telegram_config():
     """Test existing Telegram configuration"""
@@ -207,7 +204,7 @@ def test_telegram_config():
 
     print("🔍 Testing Telegram configuration...")
 
-    # Test bot
+              
     try:
         api_url = f"https://api.telegram.org/bot{bot_token}/getMe"
         response = requests.get(api_url, timeout=10)
@@ -224,7 +221,7 @@ def test_telegram_config():
         print(f"❌ Bot verification failed: {e}")
         return False
 
-    # Test message
+                  
     test_message = f"🧪 *Configuration Test*\n\n✅ Telegram integration working!\n⏰ {requests.get('http://worldtimeapi.org/api/ip').json().get('datetime', 'Unknown time')}"
 
     try:
@@ -249,7 +246,6 @@ def test_telegram_config():
     except Exception as e:
         print(f"❌ Test message failed: {e}")
         return False
-
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--test":
