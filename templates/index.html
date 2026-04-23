@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dark Web OSINT Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0f1a;
+      --surface:   #111827;
+      --surface2:  #1a2234;
+      --border:    #1f2d45;
+      --accent:    #3b82f6;
+      --accent-hov:#2563eb;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --critical:  #ef4444;
+      --high:      #f97316;
+      --medium:    #eab308;
+      --low:       #22c55e;
+      --sidebar-w: 220px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── sidebar ─────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .4px;
+    }
+    .sidebar-brand .tagline {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    nav { flex: 1; padding: 12px 0; }
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+      cursor: pointer;
+    }
+    nav a:hover  { color: var(--text); background: var(--surface2); }
+    nav a.active { color: var(--text); border-left-color: var(--accent); background: var(--surface2); }
+    nav a svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    #crawl-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    #crawl-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background .3s;
+    }
+    #crawl-dot.active { background: var(--low); animation: pulse 1.4s infinite; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: .3; }
+    }
+
+    /* ── main ────────────────────────────────────── */
+    #main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header .actions { display: flex; gap: 10px; align-items: center; }
+
+    .page { display: none; padding: 28px; }
+    .page.active { display: block; }
+
+    /* ── buttons ─────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background .15s, opacity .15s;
+    }
+    .btn svg { width: 14px; height: 14px; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hov); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: var(--surface2); }
+    .btn-danger  { background: #7f1d1d; color: #fca5a5; }
+    .btn-danger:hover  { background: #991b1b; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── stat cards ──────────────────────────────── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+    }
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card .sub { font-size: 11px; color: var(--muted); }
+    .c-critical { color: var(--critical); }
+    .c-high     { color: var(--high); }
+    .c-medium   { color: var(--medium); }
+    .c-low      { color: var(--low); }
+    .c-accent   { color: var(--accent); }
+
+    /* ── chart grid ──────────────────────────────── */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .chart-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 16px;
+    }
+    .chart-wrap { position: relative; }
+    .chart-wrap canvas { max-height: 220px; }
+
+    /* ── bottom grid ─────────────────────────────── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ── table ───────────────────────────────────── */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .table-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .table-card-header h3 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--muted);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--muted);
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 10px 14px; font-size: 13px; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .badge-critical { background: #450a0a; color: var(--critical); }
+    .badge-high     { background: #431407; color: var(--high); }
+    .badge-medium   { background: #422006; color: var(--medium); }
+    .badge-low      { background: #052e16; color: var(--low); }
+    .badge-unknown  { background: #1e293b; color: var(--muted); }
+
+    .url-cell {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    /* ── filters ─────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .filter-bar input, .filter-bar select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .filter-bar input { width: 220px; }
+    .filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+
+    /* ── pagination ──────────────────────────────── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pag-btns { display: flex; gap: 6px; }
+    .pag-btns button {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .pag-btns button:hover { background: var(--border); }
+    .pag-btns button:disabled { opacity: .4; cursor: default; }
+
+    /* ── log panel ───────────────────────────────── */
+    #log-box {
+      background: #050810;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: #86efac;
+      padding: 14px;
+      height: 380px;
+      overflow-y: auto;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ── config form ─────────────────────────────── */
+    .config-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+    .config-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--accent); }
+    .field textarea { resize: vertical; min-height: 100px; font-family: inherit; }
+    .field-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #14532d;
+      color: #bbf7d0;
+      border: 1px solid #166534;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
+
+    /* ── empty state ─────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .empty svg { width: 36px; height: 36px; margin: 0 auto 10px; display: block; opacity: .4; }
+
+    /* ── responsive ──────────────────────────────── */
+    @media (max-width: 900px) {
+      .chart-grid  { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      :root { --sidebar-w: 0px; }
+      #sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">⬛ OSINT Dashboard</div>
+    <div class="tagline">Dark Web Intelligence</div>
+  </div>
+
+  <nav>
+    <a class="active" data-page="dashboard" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <a data-page="findings" onclick="showPage('findings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Findings
+    </a>
+    <a data-page="crawl" onclick="showPage('crawl')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+      Crawl Control
+    </a>
+    <a data-page="reports" onclick="showPage('reports')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Reports
+    </a>
+    <a data-page="config" onclick="showPage('config')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 19.07A10 10 0 0 0 4.93 4.93"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      Configuration
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div id="target-label">Target: —</div>
+    <div id="crawl-indicator">
+      <div id="crawl-dot"></div>
+      <span id="crawl-status-text">Idle</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div id="main">
+
+  <header>
+    <h1 id="page-title">Dashboard</h1>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="refreshAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-primary" onclick="showPage('crawl')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Crawl
+      </button>
+    </div>
+  </header>
+
+  <!-- ── DASHBOARD ────────────────────────────── -->
+  <div id="page-dashboard" class="page active">
+
+    <!-- empty state banner -->
+    <div id="no-data-banner" style="display:none;align-items:center;gap:16px;
+         background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);
+         border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"
+           style="width:28px;height:28px;flex-shrink:0">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div>
+        <div style="font-weight:600;font-size:14px;margin-bottom:4px;">No findings yet for this target</div>
+        <div style="font-size:13px;color:var(--muted);">
+          Go to <a href="#" onclick="showPage('crawl')" style="color:var(--accent)">Crawl Control</a>
+          and click <strong>Start Crawl</strong> to begin scanning the dark web for
+          <strong id="banner-target"></strong>.
+        </div>
+      </div>
+    </div>
+
+    <!-- stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="label">Total Findings</div>
+        <div class="value c-accent" id="s-total">—</div>
+        <div class="sub">across all scans</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Critical</div>
+        <div class="value c-critical" id="s-critical">—</div>
+        <div class="sub">risk score ≥ 85</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">High</div>
+        <div class="value c-high" id="s-high">—</div>
+        <div class="sub">risk score 70–84</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Medium</div>
+        <div class="value c-medium" id="s-medium">—</div>
+        <div class="sub">risk score 50–69</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Extracted Data</div>
+        <div class="value c-low" id="s-extracted">—</div>
+        <div class="sub">data points found</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Successful Crawls</div>
+        <div class="value" id="s-crawls">—</div>
+        <div class="sub">pages fetched</div>
+      </div>
+    </div>
+
+    <!-- charts -->
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Risk Distribution</h3>
+        <div class="chart-wrap">
+          <canvas id="risk-chart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Findings — Last 14 Days</h3>
+        <div class="chart-wrap">
+          <canvas id="timeline-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- bottom grid -->
+    <div class="bottom-grid">
+      <!-- top keywords -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>Top Keywords</h3>
+        </div>
+        <table>
+          <thead><tr><th>Keyword</th><th>Occurrences</th></tr></thead>
+          <tbody id="keywords-body"></tbody>
+        </table>
+      </div>
+
+      <!-- recent critical -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>Recent Critical Findings</h3>
+        </div>
+        <table>
+          <thead><tr><th>URL</th><th>Keyword</th><th>Score</th></tr></thead>
+          <tbody id="critical-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── FINDINGS ──────────────────────────────── -->
+  <div id="page-findings" class="page">
+
+    <div class="table-card">
+      <div class="filter-bar">
+        <input type="text" id="search-input" placeholder="Search URL or keyword…" oninput="debounceSearch()"/>
+        <select id="risk-select" onchange="loadFindings(1)">
+          <option value="All">All Risk Levels</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <button class="btn btn-outline" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+        <span id="findings-count" style="color:var(--muted);font-size:12px;margin-left:auto;"></span>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Risk</th>
+              <th>Score</th>
+              <th>Classification</th>
+              <th>URL</th>
+              <th>Keyword</th>
+              <th>Confidence</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="findings-body"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span id="pag-info">—</span>
+        <div class="pag-btns">
+          <button id="pag-prev" onclick="changePage(-1)" disabled>← Prev</button>
+          <button id="pag-next" onclick="changePage(1)"  disabled>Next →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── CRAWL CONTROL ─────────────────────────── -->
+  <div id="page-crawl" class="page">
+
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="btn-start" onclick="startCrawl()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Crawl
+      </button>
+      <button class="btn btn-danger" id="btn-stop" onclick="stopCrawl()" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        Stop
+      </button>
+      <button class="btn btn-outline" onclick="clearLog()">Clear Log</button>
+      <button class="btn btn-outline" style="color:var(--critical);border-color:#7f1d1d;" onclick="clearFindings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Clear Findings
+      </button>
+      <span id="crawl-badge" style="font-size:12px;color:var(--muted);">Status: Idle</span>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:20px;">
+      <h3>Live Output</h3>
+      <div id="log-box"></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-card-header"><h3>Crawl History</h3></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>URL</th><th>Status</th><th>Code</th><th>Duration</th><th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── REPORTS ──────────────────────────────── -->
+  <div id="page-reports" class="page">
+
+    <div class="config-card">
+      <h3>PDF Security Report</h3>
+
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.6;">
+        Generate a comprehensive PDF report containing all findings, risk scores,
+        classification breakdown, and mitigation recommendations.
+      </p>
+
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="btn btn-primary" id="btn-gen-report" onclick="generateReport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Generate Report
+        </button>
+        <button class="btn btn-outline" id="btn-dl-report" onclick="downloadReport()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </button>
+        <span id="report-status-text" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+
+      <div id="report-log" style="display:none;">
+        <div class="chart-card" style="margin-top:0;">
+          <h3>Output</h3>
+          <div id="report-log-box" style="
+            background:#050810;border:1px solid var(--border);border-radius:8px;
+            font-family:monospace;font-size:12px;color:#86efac;
+            padding:14px;height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;
+          "></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── CONFIG ────────────────────────────────── -->
+  <div id="page-config" class="page">
+
+    <div class="config-card">
+      <h3>Target & Scan Settings</h3>
+
+      <div class="field">
+        <label>Target Company</label>
+        <input type="text" id="cfg-company" placeholder="e.g. Acme Corp"/>
+        <div class="field-hint">Name used to search Torch for relevant dark web content.</div>
+      </div>
+
+      <div class="field">
+        <label>Max Crawl Workers</label>
+        <input type="number" id="cfg-workers" min="1" max="20" value="3"/>
+        <div class="field-hint">Number of concurrent threads. Keep low (1–5) for Tor stability.</div>
+      </div>
+
+      <div class="field">
+        <label>Tor Timeout (seconds)</label>
+        <input type="number" id="cfg-timeout" min="10" max="300" value="60"/>
+      </div>
+
+      <div class="field">
+        <label>Keywords (comma-separated)</label>
+        <textarea id="cfg-keywords" rows="4"></textarea>
+        <div class="field-hint">Keywords to search for in crawled pages.</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
+    </div>
+
+    <div class="config-card">
+      <h3>Telegram Alerts</h3>
+
+      <div class="field">
+        <label>Bot Token</label>
+        <input type="password" id="cfg-bot-token" placeholder="123456:ABC-DEF…"/>
+        <div class="field-hint">Get this from @BotFather on Telegram. Run <code>python telegram_setup.py</code> for guided setup.</div>
+      </div>
+
+      <div class="field">
+        <label>Chat ID</label>
+        <input type="text" id="cfg-chat-id" placeholder="-100123456789"/>
+        <div class="field-hint">Your personal or group chat ID. Send a message to your bot then check /getUpdates.</div>
+      </div>
+
+      <div class="field">
+        <label>Minimum Risk Score to Alert</label>
+        <input type="number" id="cfg-min-risk" min="0" max="100" value="70"/>
+        <div class="field-hint">Alerts are sent when risk score ≥ this value (70 = High, 85 = Critical only).</div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
+          <input type="checkbox" id="cfg-tg-enabled" style="width:auto;accent-color:var(--accent)"/>
+          Enable Telegram alerts
+        </label>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="saveTelegramConfig()">Save Telegram Settings</button>
+        <button class="btn btn-outline" id="btn-test-tg" onclick="testTelegram()">Send Test Message</button>
+        <span id="tg-test-result" style="font-size:12px;color:var(--muted);align-self:center;"></span>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /main -->
+
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   State
+══════════════════════════════════════════════ */
+let currentPage  = 1;
+let totalPages   = 1;
+let searchTimer  = null;
+let riskChart    = null;
+let timelineChart = null;
+let sseSource    = null;
+let crawlPolling = null;
+
+/* ══════════════════════════════════════════════
+   Navigation
+══════════════════════════════════════════════ */
+const pageTitles = {
+  dashboard: 'Dashboard',
+  findings:  'Findings',
+  crawl:     'Crawl Control',
+  reports:   'Reports',
+  config:    'Configuration',
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === name);
+  });
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name] || name;
+
+  if (name === 'findings')  loadFindings(1);
+  if (name === 'crawl')     loadCrawlHistory();
+  if (name === 'reports')   checkReportStatus();
+  if (name === 'config')    loadConfig();
+}
+
+/* ══════════════════════════════════════════════
+   Toast
+══════════════════════════════════════════════ */
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ══════════════════════════════════════════════
+   Dashboard
+══════════════════════════════════════════════ */
+async function loadStats() {
+  const r = await fetch('/api/stats').then(r => r.json());
+  document.getElementById('s-total').textContent     = r.total;
+  document.getElementById('s-critical').textContent  = r.critical;
+  document.getElementById('s-high').textContent      = r.high;
+  document.getElementById('s-medium').textContent    = r.medium;
+  document.getElementById('s-extracted').textContent = r.extracted;
+  document.getElementById('s-crawls').textContent    = r.crawls;
+  document.getElementById('target-label').textContent = 'Target: ' + (r.target || '—');
+  const bt = document.getElementById('banner-target');
+  if (bt) bt.textContent = r.target || 'the target company';
+
+  const banner = document.getElementById('no-data-banner');
+  if (banner) banner.style.display = r.total === 0 ? 'flex' : 'none';
+}
+
+async function loadCharts() {
+  const r = await fetch('/api/chart-data').then(r => r.json());
+
+  // Risk donut
+  const rCtx = document.getElementById('risk-chart').getContext('2d');
+  const labels = Object.keys(r.risk_dist);
+  const values = Object.values(r.risk_dist);
+  const colors = labels.map(l => ({
+    Critical: '#ef4444', High: '#f97316', Medium: '#eab308', Low: '#22c55e'
+  }[l] || '#64748b'));
+
+  if (riskChart) riskChart.destroy();
+  riskChart = new Chart(rCtx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 4 }] },
+    options: {
+      responsive: true,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 12 }, padding: 14, boxWidth: 12 } }
+      }
+    }
+  });
+
+  // Timeline bar
+  const tCtx = document.getElementById('timeline-chart').getContext('2d');
+  const days  = Object.keys(r.timeline);
+  const counts = Object.values(r.timeline);
+  const shortDays = days.map(d => d.slice(5)); // MM-DD
+
+  if (timelineChart) timelineChart.destroy();
+  timelineChart = new Chart(tCtx, {
+    type: 'bar',
+    data: {
+      labels: shortDays,
+      datasets: [{
+        label: 'Findings',
+        data: counts,
+        backgroundColor: '#3b82f644',
+        borderColor: '#3b82f6',
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', maxRotation: 45, font: { size: 10 } }, grid: { color: '#1f2d45' } },
+        y: { ticks: { color: '#64748b', stepSize: 1 }, grid: { color: '#1f2d45' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Keywords table
+  const kBody = document.getElementById('keywords-body');
+  kBody.innerHTML = r.keywords.length
+    ? r.keywords.map(k => `<tr><td>${esc(k.keyword)}</td><td>${k.count}</td></tr>`).join('')
+    : '<tr><td colspan="2" class="empty">No keyword data yet.</td></tr>';
+
+  // Recent critical
+  const cData = await fetch('/api/recent-critical').then(r => r.json());
+  const cBody = document.getElementById('critical-body');
+  cBody.innerHTML = cData.length
+    ? cData.map(c => `
+        <tr>
+          <td><div class="url-cell" title="${esc(c.url)}">${esc(c.url)}</div></td>
+          <td>${esc(c.keyword || 'N/A')}</td>
+          <td><span class="badge badge-critical">${Math.round(c.risk_score)}</span></td>
+        </tr>`).join('')
+    : '<tr><td colspan="3" class="empty">No critical findings.</td></tr>';
+}
+
+/* ══════════════════════════════════════════════
+   Findings table
+══════════════════════════════════════════════ */
+async function loadFindings(page) {
+  currentPage = page || currentPage;
+  const risk   = document.getElementById('risk-select').value;
+  const search = document.getElementById('search-input').value.trim();
+
+  const params = new URLSearchParams({ risk, search, page: currentPage });
+  const r = await fetch('/api/findings?' + params).then(r => r.json());
+
+  totalPages = Math.max(1, Math.ceil(r.total / r.per_page));
+
+  document.getElementById('findings-count').textContent =
+    `${r.total} finding${r.total !== 1 ? 's' : ''}`;
+  document.getElementById('pag-info').textContent =
+    `Page ${currentPage} of ${totalPages}`;
+  document.getElementById('pag-prev').disabled = currentPage <= 1;
+  document.getElementById('pag-next').disabled = currentPage >= totalPages;
+
+  const body = document.getElementById('findings-body');
+  if (!r.findings.length) {
+    body.innerHTML = '<tr><td colspan="8" class="empty">No findings match the current filter.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = r.findings.map((f, i) => {
+    const rowNum = (currentPage - 1) * r.per_page + i + 1;
+    const badge  = badgeHtml(f.risk_label);
+    const date   = f.found_at ? f.found_at.slice(0, 16).replace('T', ' ') : '—';
+    return `<tr>
+      <td style="color:var(--muted)">${rowNum}</td>
+      <td>${badge}</td>
+      <td style="font-weight:600">${f.risk_score}</td>
+      <td>${esc(f.classification)}</td>
+      <td><div class="url-cell" title="${esc(f.url)}">${esc(f.url)}</div></td>
+      <td>${esc(f.keyword)}</td>
+      <td>${f.confidence}%</td>
+      <td style="color:var(--muted);font-size:12px">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+function changePage(delta) {
+  const next = currentPage + delta;
+  if (next >= 1 && next <= totalPages) loadFindings(next);
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadFindings(1), 350);
+}
+
+function badgeHtml(level) {
+  const map = { Critical: 'badge-critical', High: 'badge-high', Medium: 'badge-medium', Low: 'badge-low' };
+  return `<span class="badge ${map[level] || 'badge-unknown'}">${level}</span>`;
+}
+
+function exportCSV() {
+  window.location = '/api/export/csv';
+}
+
+/* ══════════════════════════════════════════════
+   Crawl control
+══════════════════════════════════════════════ */
+async function startCrawl() {
+  const r = await fetch('/api/crawl/start', { method: 'POST' }).then(r => r.json());
+  if (r.ok) {
+    toast('Crawl started');
+    setCrawlUI(true);
+    connectSSE();
+  } else {
+    toast(r.message || 'Failed to start crawl', 'error');
+  }
+}
+
+async function stopCrawl() {
+  await fetch('/api/crawl/stop', { method: 'POST' });
+  toast('Stop signal sent');
+  setCrawlUI(false);
+}
+
+function setCrawlUI(active) {
+  document.getElementById('btn-start').disabled = active;
+  document.getElementById('btn-stop').disabled  = !active;
+  document.getElementById('crawl-badge').textContent = active ? 'Status: Running…' : 'Status: Idle';
+  document.getElementById('crawl-dot').classList.toggle('active', active);
+  document.getElementById('crawl-status-text').textContent = active ? 'Running' : 'Idle';
+}
+
+function connectSSE() {
+  if (sseSource) sseSource.close();
+  sseSource = new EventSource('/api/logs/stream');
+  sseSource.onmessage = e => {
+    if (!e.data) return; // heartbeat
+    const line = JSON.parse(e.data);
+    appendLog(line);
+  };
+}
+
+function appendLog(line) {
+  const box = document.getElementById('log-box');
+  box.textContent += line + '\n';
+  box.scrollTop = box.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log-box').textContent = '';
+}
+
+async function clearFindings() {
+  if (!confirm('Delete all findings and reset the URL queue for the current target company?')) return;
+  const r = await fetch('/api/findings/clear', { method: 'POST' }).then(r => r.json());
+  if (r.ok) {
+    toast(`Cleared ${r.deleted} findings and URL queue`);
+    loadCrawlHistory();
+    refreshAll();
+  } else {
+    toast('Clear failed', 'error');
+  }
+}
+
+async function loadCrawlHistory() {
+  const rows = await fetch('/api/crawl-history').then(r => r.json());
+  const body = document.getElementById('history-body');
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="5" class="empty">No crawl history yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(r => {
+    const statusColor = r.status === 'success' ? 'var(--low)' : 'var(--critical)';
+    const dur = r.duration_seconds ? r.duration_seconds.toFixed(2) + 's' : '—';
+    const time = r.crawled_at ? r.crawled_at.slice(0, 16).replace('T', ' ') : '—';
+    return `<tr>
+      <td><div class="url-cell" title="${esc(r.url)}">${esc(r.url)}</div></td>
+      <td style="color:${statusColor};font-weight:600">${esc(r.status)}</td>
+      <td>${r.status_code || '—'}</td>
+      <td>${dur}</td>
+      <td style="color:var(--muted);font-size:12px">${time}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   Reports
+══════════════════════════════════════════════ */
+async function checkReportStatus() {
+  const r = await fetch('/api/report/status').then(r => r.json());
+  const dlBtn = document.getElementById('btn-dl-report');
+  const statusText = document.getElementById('report-status-text');
+  if (r.exists) {
+    dlBtn.disabled = false;
+    statusText.textContent = `Last generated: ${r.generated_at}`;
+  } else {
+    dlBtn.disabled = true;
+    statusText.textContent = 'No report generated yet.';
+  }
+}
+
+async function generateReport() {
+  const btn    = document.getElementById('btn-gen-report');
+  const logDiv = document.getElementById('report-log');
+  const logBox = document.getElementById('report-log-box');
+
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  logDiv.style.display = 'block';
+  logBox.textContent = '';
+
+  const r = await fetch('/api/report/generate', { method: 'POST' }).then(r => r.json());
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Report`;
+
+  if (r.ok) {
+    toast('Report generated successfully');
+    checkReportStatus();
+  } else {
+    toast(r.message || 'Report generation failed', 'error');
+  }
+
+  // Pull latest log lines into the report log box
+  logBox.textContent = '[Done — check the Live Output in Crawl Control for full details]';
+}
+
+function downloadReport() {
+  window.location = '/api/report/download';
+}
+
+/* ══════════════════════════════════════════════
+   Config
+══════════════════════════════════════════════ */
+async function loadConfig() {
+  const cfg = await fetch('/api/config').then(r => r.json());
+  document.getElementById('cfg-company').value  = cfg.target_company || '';
+  document.getElementById('cfg-workers').value  = cfg.crawling?.max_workers ?? 3;
+  document.getElementById('cfg-timeout').value  = cfg.tor?.timeout ?? 60;
+  document.getElementById('cfg-keywords').value = (cfg.keywords || []).join(', ');
+  // Telegram
+  const tg = cfg.alerts?.telegram || {};
+  document.getElementById('cfg-bot-token').value  = tg.bot_token  || '';
+  document.getElementById('cfg-chat-id').value    = tg.chat_id    || '';
+  document.getElementById('cfg-tg-enabled').checked = !!tg.enabled;
+  document.getElementById('cfg-min-risk').value   = cfg.alerts?.min_risk_score ?? 70;
+}
+
+async function saveConfig() {
+  const keywords = document.getElementById('cfg-keywords').value
+    .split(',').map(k => k.trim()).filter(Boolean);
+  const payload = {
+    target_company: document.getElementById('cfg-company').value.trim(),
+    max_workers:    parseInt(document.getElementById('cfg-workers').value),
+    timeout:        parseInt(document.getElementById('cfg-timeout').value),
+    keywords,
+  };
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then(r => r.json());
+
+  if (r.ok) {
+    toast('Configuration saved');
+    loadStats();
+  } else {
+    toast('Save failed', 'error');
+  }
+}
+
+async function saveTelegramConfig() {
+  const payload = {
+    telegram: {
+      bot_token: document.getElementById('cfg-bot-token').value.trim(),
+      chat_id:   document.getElementById('cfg-chat-id').value.trim(),
+      enabled:   document.getElementById('cfg-tg-enabled').checked,
+    },
+    min_risk_score: parseInt(document.getElementById('cfg-min-risk').value),
+  };
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then(r => r.json());
+  r.ok ? toast('Telegram settings saved') : toast('Save failed', 'error');
+}
+
+async function testTelegram() {
+  const btn = document.getElementById('btn-test-tg');
+  const result = document.getElementById('tg-test-result');
+  btn.disabled = true;
+  result.textContent = 'Sending…';
+  result.style.color = 'var(--muted)';
+
+  const r = await fetch('/api/telegram/test', { method: 'POST' }).then(r => r.json());
+  btn.disabled = false;
+  if (r.success) {
+    result.textContent = '✓ Test message sent — check Telegram';
+    result.style.color = 'var(--low)';
+  } else {
+    result.textContent = '✗ ' + (r.message || 'Failed');
+    result.style.color = 'var(--critical)';
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Crawl status polling
+══════════════════════════════════════════════ */
+async function pollCrawlStatus() {
+  const r = await fetch('/api/crawl/status').then(r => r.json()).catch(() => ({ active: false }));
+  setCrawlUI(r.active);
+  if (r.active && !sseSource) connectSSE();
+}
+
+/* ══════════════════════════════════════════════
+   Utility
+══════════════════════════════════════════════ */
+function esc(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function refreshAll() {
+  loadStats();
+  loadCharts();
+}
+
+/* ══════════════════════════════════════════════
+   Init
+══════════════════════════════════════════════ */
+(async function init() {
+  await loadStats();
+  await loadCharts();
+  pollCrawlStatus();
+  crawlPolling = setInterval(pollCrawlStatus, 5000);
+})();
+</script>
+</body>
+</html>

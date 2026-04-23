@@ -1,0 +1,20 @@
+
+============================================================
+DARK WEB OSINT FINDINGS REPORT
+Generated: 2026-04-22 01:21:51
+============================================================
+
+STATISTICS:
+- Total Findings: 0
+- Successful Crawls: 115
+- Extracted Data Points: 14
+
+DATABASE LOCATION: findings.db
+
+Use the following commands to query findings:
+  sqlite3 findings.db "SELECT * FROM findings ORDER BY found_at DESC;"
+  sqlite3 findings.db "SELECT data_type, COUNT(*) FROM extracted_data GROUP BY data_type;"
+  sqlite3 findings.db "SELECT * FROM crawl_history WHERE status='success';"
+
+============================================================
+        

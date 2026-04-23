@@ -1,0 +1,87 @@
+{
+  "tor": {
+    "proxy": "socks5h://127.0.0.1:9150",
+    "timeout": 60,
+    "retries": 3,
+    "retry_delay": 5
+  },
+  "crawling": {
+    "max_workers": 3,
+    "batch_size": 5,
+    "delay_between_requests": 8,
+    "max_page_size_mb": 10
+  },
+  "keywords": [
+    "leak",
+    "password",
+    "email",
+    "credit card",
+    "ssn",
+    "database",
+    "admin",
+    "hack",
+    "exploit",
+    "vulnerability",
+    "breach",
+    "username",
+    "Fitzgibbon Hospital"
+  ],
+  "risk_weights": {
+    "password": 20,
+    "email": 10,
+    "credit card": 25,
+    "ssn": 30,
+    "database": 15,
+    "admin": 10,
+    "hack": 12,
+    "exploit": 15,
+    "vulnerability": 12,
+    "breach": 18,
+    "username": 8,
+    "api key": 25,
+    "token": 20,
+    "secret": 10,
+    "leak": 12,
+    "darkweb": 3,
+    "onion": 2,
+    "hidden wiki": 2,
+    "tor": 1,
+    "bitcoin": 3,
+    "apple": 5
+  },
+  "data_type_weights": {
+    "email": 10,
+    "phone": 8,
+    "credit_card": 25,
+    "ssn": 30,
+    "api_key": 30
+  },
+  "regex_patterns": {
+    "email": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+    "phone": "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b",
+    "credit_card": "\\b\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}\\b",
+    "ssn": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+    "api_key": "[Aa][Pp][Ii][_-]?[Kk][Ee][Yy]\\s*[:=]\\s*[\\w-]{20,}"
+  },
+  "seed_urls": [],
+  "target_company": "Fitzgibbon Hospital",
+  "scheduling": {
+    "enable_scheduler": true,
+    "interval_minutes": 60,
+    "start_hour": 0,
+    "end_hour": 23
+  },
+  "database": {
+    "name": "findings.db",
+    "backup_interval_hours": 24
+  },
+  "alerts": {
+    "telegram": {
+      "enabled": true,
+      "bot_token": "8677962184:AAG6ZLeU39B2pYvSr5zwVbnHQ5F4YuI9TuU",
+      "chat_id": "7988270981"
+    },
+    "min_risk_score": 25,
+    "contact_email": "security@company.com"
+  }
+}

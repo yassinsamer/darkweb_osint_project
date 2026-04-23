@@ -1,0 +1,35 @@
+[Unit]
+Description=Dark Web OSINT Monitoring Daemon
+Documentation=file:///path/to/project/README.md
+After=network-online.target tor.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=osint
+WorkingDirectory=/opt/darkweb-osint
+ExecStart=/opt/darkweb-osint/.venv/bin/python daemon.py --start
+ExecStop=/bin/kill -TERM $MAINPID
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=30s
+
+# Resource limits
+CPUQuota=50%
+MemoryLimit=1G
+MemoryAccounting=true
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/darkweb-osint/findings.db /opt/darkweb-osint/backups /opt/darkweb-osint/logs
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=osint-daemon
+
+[Install]
+WantedBy=multi-user.target
